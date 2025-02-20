@@ -49,8 +49,8 @@ def calcular_proyeccion(meses):
     clubes_totales = [clubes_iniciales]
     usuarios_premium = [(agentes_iniciales + clubes_iniciales) * conversion_premium]
     ingresos_suscripciones = [usuarios_premium[0] * precio_suscripcion]
-    transferencias_totales = [(clubes_iniciales * fichajes_por_club_anual) / 12]  # Transferencias mensuales
-    ingresos_transferencias = [transferencias_totales[0] * valor_medio_transferencia * comision_transferencia]
+    transferencias_totales = [0]  # Inicializamos como 0 para el caso de no haber transferencias
+    ingresos_transferencias = [0]  # Inicializamos como 0
     gastos_totales = [infraestructura_mensual + salarios_mensuales + marketing_mensual + otros_costos_mensuales]
     ingresos_totales = [ingresos_suscripciones[0] + ingresos_transferencias[0]]
     ganancias_netas = [ingresos_totales[0] - gastos_totales[0]]
@@ -68,15 +68,38 @@ def calcular_proyeccion(meses):
         usuarios_premium.append(premium)
         ingresos_suscripciones.append(premium * precio_suscripcion)
 
-        # Transferencias exitosas (fichajes por club al año, distribuido mensualmente)
-        transferencias = nuevos_clubes * fichajes_por_club_anual / 12
+        # Verificar si hay fichajes por club al año
+        if fichajes_por_club_anual > 0:
+            # Transferencias exitosas (fichajes por club al año, distribuido mensualmente)
+            transferencias = nuevos_clubes * fichajes_por_club_anual / 12
+            if transferencias > 0:
+                ingresos_transferencias.append(transferencias * valor_medio_transferencia * comision_transferencia)
+            else:
+                ingresos_transferencias.append(0)
+        else:
+            ingresos_transferencias.append(0)
+
         transferencias_totales.append(transferencias)
-        ingresos_transferencias.append(transferencias * valor_medio_transferencia * comision_transferencia)
 
         # Gastos e ingresos totales
         gastos_totales.append(infraestructura_mensual + salarios_mensuales + marketing_mensual + otros_costos_mensuales)
         ingresos_totales.append(ingresos_suscripciones[-1] + ingresos_transferencias[-1])
         ganancias_netas.append(ingresos_totales[-1] - gastos_totales[-1])
+
+    # DataFrame con los resultados
+    return pd.DataFrame({
+        "Mes": range(1, meses + 1),
+        "Agentes Totales": agentes_totales,
+        "Clubes Totales": clubes_totales,
+        "Usuarios Premium": usuarios_premium,
+        "Ingresos Suscripciones (€)": ingresos_suscripciones,
+        "Transferencias Exitosas": transferencias_totales,
+        "Ingresos Transferencias (€)": ingresos_transferencias,
+        "Ingresos Totales (€)": ingresos_totales,
+        "Gastos Totales (€)": gastos_totales,
+        "Ganancias Netas (€)": ganancias_netas,
+    })
+
 
     # DataFrame con los resultados
     return pd.DataFrame({
